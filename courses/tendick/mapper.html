@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Perfect Hole Mapper</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #fff; margin: 0; padding: 20px; text-align: center; }
+        #map-container { position: relative; display: inline-block; cursor: crosshair; border: 2px solid #555; margin-top: 10px; }
+        #map-img { max-width: 90vw; max-height: 80vh; display: block; }
+        .marker { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; border: 2px solid #000; font-size:10px; font-weight:bold; color:#000; text-align:center; line-height:14px; z-index: 10;}
+        .marker.tee { background: #9b59b6; }
+        .marker.pin { background: #e74c3c; }
+        
+        /* Draw lines to show the connection */
+        .line { position: absolute; background: rgba(255,255,255,0.5); transform-origin: 0 50%; pointer-events: none; height: 2px; }
+
+        #header { font-size: 24px; font-weight: bold; margin-bottom: 5px; color: #2ecc71; }
+        #subtext { color: #aaa; margin-bottom: 15px; }
+        #result-container { display: none; margin-top: 20px; }
+        textarea { width: 80%; height: 450px; font-family: monospace; background: #333; color: #2ecc71; padding: 15px; border-radius: 8px; border: 1px solid #555; }
+    </style>
+</head>
+<body>
+    <div id="header">Hole 1: Click the TEE (Square)</div>
+    <div id="subtext">Click the purple or white square for Hole 1.</div>
+    <div id="map-container">
+        <img src="Map.png" id="map-img" draggable="false">
+    </div>
+    
+    <div id="result-container">
+        <h2>Mapping Complete! 🎉</h2>
+        <p>Copy this code and paste it into our chat, and I'll update the app immediately.</p>
+        <textarea id="result-code"></textarea>
+    </div>
+
+    <script>
+        const img = document.getElementById('map-img');
+        const container = document.getElementById('map-container');
+        const header = document.getElementById('header');
+        const subtext = document.getElementById('subtext');
+        const resultContainer = document.getElementById('result-container');
+        const resultCode = document.getElementById('result-code');
+        
+        let currentHole = 1;
+        let step = 'TEE'; 
+        
+        const points = []; 
+        let currentTee = null;
+        let currentTeeMarker = null;
+
+        function drawLine(x1, y1, x2, y2, color) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx*dx + dy*dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            const line = document.createElement('div');
+            line.className = 'line';
+            line.style.width = (length * 100) + '%';
+            line.style.left = (x1 * 100) + '%';
+            line.style.top = (y1 * 100) + '%';
+            line.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+            line.style.background = color;
+            container.appendChild(line);
+        }
+
+        img.addEventListener('click', (e) => {
+            if (currentHole > 18) return;
+
+            const rect = img.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+
+            const marker = document.createElement('div');
+            marker.className = 'marker ' + (step === 'TEE' ? 'tee' : 'pin');
+            marker.style.left = (x * 100) + '%';
+            marker.style.top = (y * 100) + '%';
+            marker.innerText = currentHole;
+            container.appendChild(marker);
+
+            if (step === 'TEE') {
+                currentTee = { x, y };
+                currentTeeMarker = marker;
+                step = 'PIN';
+                header.innerText = `Hole ${currentHole}: Click the PIN (Circle)`;
+                header.style.color = '#e74c3c';
+                subtext.innerText = "Click the target circle for this hole.";
+                
+                // If it's not hole 1, draw a faint line from previous pin to this tee
+                if (currentHole > 1) {
+                    const prevPin = points[currentHole-2].pin;
+                    drawLine(prevPin.x, prevPin.y, x, y, 'rgba(155, 89, 182, 0.5)');
+                }
+            } else {
+                const pin = { x, y };
+                points.push({ tee: currentTee, pin: pin });
+                
+                // Draw fairway line
+                drawLine(currentTee.x, currentTee.y, pin.x, pin.y, 'rgba(46, 204, 113, 0.8)');
+                
+                currentHole++;
+                if (currentHole > 18) {
+                    // Draw line from 18 to 1
+                    drawLine(pin.x, pin.y, points[0].tee.x, points[0].tee.y, 'rgba(155, 89, 182, 0.5)');
+                    header.innerText = "Processing...";
+                    setTimeout(generateCode, 500);
+                } else {
+                    step = 'TEE';
+                    header.innerText = `Hole ${currentHole}: Click the TEE (Square)`;
+                    header.style.color = '#2ecc71';
+                    subtext.innerText = "Click the starting square for the next hole.";
+                }
+            }
+        });
+
+        function generateCode() {
+            container.style.display = 'none';
+            header.style.display = 'none';
+            subtext.style.display = 'none';
+            resultContainer.style.display = 'block';
+            
+            const coordinates = [];
+
+            for (let i = 0; i < 18; i++) {
+                const tee = points[i].tee;
+                const pin = points[i].pin;
+                const nextTee = i < 17 ? points[i+1].tee : points[0].tee;
+
+                const dx = pin.x - tee.x;
+                const dy = pin.y - tee.y;
+                const angleRad = Math.atan2(dy, dx);
+                
+                // Rotation to make tee->pin point UP (0, -1)
+                const R = -Math.PI / 2 - angleRad;
+                
+                const rotate = (px, py, angle) => ({
+                    x: px * Math.cos(angle) - py * Math.sin(angle),
+                    y: px * Math.sin(angle) + py * Math.cos(angle)
+                });
+
+                // Transform points to rotated space
+                const pPin = rotate(pin.x - tee.x, pin.y - tee.y, R);
+                const pNext = rotate(nextTee.x - tee.x, nextTee.y - tee.y, R);
+                const pTee = {x: 0, y: 0};
+
+                // Bounding box in rotated space
+                const minX = Math.min(pTee.x, pPin.x, pNext.x);
+                const maxX = Math.max(pTee.x, pPin.x, pNext.x);
+                const minY = Math.min(pTee.y, pPin.y, pNext.y);
+                const maxY = Math.max(pTee.y, pPin.y, pNext.y);
+
+                const cxRot = (minX + maxX) / 2;
+                const cyRot = (minY + maxY) / 2;
+
+                // Padding ensures it's not cropped tightly
+                let w = Math.max(maxX - minX, 0.05); 
+                let h = Math.max(maxY - minY, 0.1);
+                const wPad = w * 1.6; 
+                const hPad = h * 1.6;
+
+                // Center back in original space
+                const centerOrig = rotate(cxRot, cyRot, -R);
+                const cx = centerOrig.x + tee.x;
+                const cy = centerOrig.y + tee.y;
+
+                const screenAspect = 1.8; // Standard tall ratio
+                const scaleX = 1 / wPad;
+                const scaleY = screenAspect / hPad;
+                let scale = Math.min(scaleX, scaleY);
+                
+                if (scale > 6.0) scale = 6.0;
+                if (scale < 1.0) scale = 1.0;
+
+                let rotDeg = R * 180 / Math.PI;
+                while (rotDeg < 0) rotDeg += 360;
+
+                coordinates.push({
+                    x: cx.toFixed(3),
+                    y: cy.toFixed(3),
+                    rot: Math.round(rotDeg),
+                    scale: scale.toFixed(2)
+                });
+            }
+
+            let js = "const mapCoordinates = [\n";
+            coordinates.forEach((c, i) => {
+                js += `    { x: ${c.x}, y: ${c.y}, rot: ${c.rot}, scale: ${c.scale} }, // Hole ${i+1}\n`;
+            });
+            js += "];";
+            resultCode.value = js;
+        }
+    </script>
+</body>
+</html>
