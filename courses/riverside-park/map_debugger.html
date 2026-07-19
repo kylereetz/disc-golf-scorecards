@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map Coordinates Debugger</title>
+    <style>
+        body { font-family: sans-serif; background: #222; color: #fff; text-align: center; margin: 0; padding: 20px; }
+        .container { display: inline-block; position: relative; margin-top: 20px; border: 2px solid #555; }
+        .container img { display: block; max-width: 100%; }
+        
+        /* The exact viewport size as seen on a mobile device (scaled proportionally) */
+        .viewport-box {
+            position: absolute;
+            border: 3px solid #2ECC71;
+            background: rgba(46, 204, 113, 0.2);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+            transform-origin: center center;
+            pointer-events: none;
+        }
+        
+        .center-dot {
+            position: absolute;
+            width: 8px; height: 8px;
+            background: red;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .up-arrow {
+            position: absolute;
+            top: 10px; left: 50%;
+            transform: translateX(-50%);
+            color: #2ECC71;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .info { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h2>Hole 1 Viewport Debugger</h2>
+    <p>This shows exactly what portion of the map is being cropped and rotated for Hole 1.</p>
+    <p>The green box represents your phone screen. The arrow points to the TOP of your phone screen.</p>
+    
+    <div class="container" id="map-container">
+        <img src="Map.png" id="map-img">
+        <div id="viewport" class="viewport-box">
+            <div class="center-dot"></div>
+            <div class="up-arrow">↑ TOP OF PHONE</div>
+        </div>
+    </div>
+
+    <div class="info">
+        <strong>Current Hole 1 Coordinates:</strong><br>
+        x: 0.82, y: 0.25 | rotation: 180° | scale: 3.5
+    </div>
+
+    <script>
+        window.onload = () => {
+            // Screen aspect ratio (typical tall phone)
+            const phoneAspect = 2.0; // height / width
+            
+            // Map dimensions
+            const img = document.getElementById('map-img');
+            const w = img.clientWidth;
+            const h = img.clientHeight;
+            
+            // App settings for Hole 1
+            const cx = 0.82;
+            const cy = 0.25;
+            const rot = 180;
+            const scale = 3.5;
+            
+            // Calculate viewport box size relative to the map
+            // In the app, map width = screen width * scale
+            // So screen width = map width / scale
+            const boxWidth = w / scale;
+            const boxHeight = boxWidth * phoneAspect;
+            
+            // Position the box
+            const box = document.getElementById('viewport');
+            box.style.width = boxWidth + 'px';
+            box.style.height = boxHeight + 'px';
+            
+            // Center it at cx, cy
+            const centerX = w * cx;
+            const centerY = h * cy;
+            box.style.left = (centerX - boxWidth / 2) + 'px';
+            box.style.top = (centerY - boxHeight / 2) + 'px';
+            
+            // Apply rotation (we rotate the box to show what part of the map is UP on the phone)
+            // If the map rotates by 180 degrees in the app, it means the phone's "UP" is pointing "DOWN" (180 degrees) on the map.
+            box.style.transform = `rotate(${-rot}deg)`;
+        };
+    </script>
+</body>
+</html>

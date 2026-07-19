@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sandy Knoll Scorecard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Dynamic Map Background -->
+        <div class="map-container">
+            <div id="map-rotator" class="full-map">
+                <img id="map-layer" src="Map.png" alt="Course Map">
+            </div>
+            <div class="map-overlay-darken"></div>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="screen active">
+            <header>
+                <h1>Sandy Knoll</h1>
+            <p>Scorecard & Map</p>
+            </header>
+            
+            <div class="card setup-card">
+                <h2>Add Players</h2>
+                <div class="input-group">
+                    <input type="text" id="player-name-input" placeholder="Enter player name..." />
+                    <button id="add-player-btn" class="btn-primary">+</button>
+                </div>
+                <ul id="player-list" class="player-list">
+                    <!-- Players will be added here -->
+                </ul>
+                <button id="start-round-btn" class="btn-large btn-success" disabled>Start Round</button>
+            </div>
+        </div>
+
+        <!-- Hole Screen -->
+        <div id="hole-screen" class="screen">
+            <header class="hole-header">
+                <div class="hole-nav">
+                    <button id="prev-hole-btn" class="nav-btn">&larr;</button>
+                    <div class="hole-info-display">
+                        <h2 id="current-hole-title">Hole 1</h2>
+                        <span id="current-hole-par" class="par-badge">Par 3</span>
+                    </div>
+                    <button id="next-hole-btn" class="nav-btn">&rarr;</button>
+                </div>
+            </header>
+            
+            <div class="scores-container" id="scores-container">
+                <!-- Player score controls will be injected here -->
+            </div>
+            
+            <div class="bottom-actions">
+                <button id="view-scorecard-btn" class="btn-large btn-secondary">View Scorecard</button>
+            </div>
+        </div>
+
+        <!-- Overview Scorecard Screen -->
+        <div id="overview-screen" class="screen">
+            <header class="overview-header">
+                <h2>Sandy Knoll Scorecard</h2>
+                <button id="back-to-hole-btn" class="close-btn">&times;</button>
+            </header>
+            
+            <div class="table-container">
+                <table id="scorecard-table">
+                    <!-- Table injected by JS -->
+                </table>
+            </div>
+            
+            <div class="bottom-actions">
+                <button id="end-round-btn" class="btn-large btn-danger">End Round & Reset</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
